@@ -19,19 +19,11 @@ find_library(GLESV2_LIB NAMES GLESv2 GLESv2_SCALAR REQUIRED)
 
 # ---- Paths ----
 
-# WM_CORE_ROOT: where to find WM headers (include/wm/) and libs (lib/)
-# In-tree default: sibling output/windowsmanager/ after CORE is built & installed
-# Separate repo: set via env WM_CORE_ROOT or cmake -DWM_CORE_ROOT=...
-set(WM_CORE_ROOT "$ENV{WM_CORE_ROOT}")
-if(NOT WM_CORE_ROOT)
-    set(WM_CORE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../output/windowsmanager")
-endif()
-message(STATUS "WM_CORE_ROOT = ${WM_CORE_ROOT}")
-
-# WM_SDKROOT: SDK for cvi-lib-servicefw / cvi-lib-log / spdlog
+# WM_SDKROOT: pre-built SDK directory (contains include/ and lib/)
+# Set via env WM_SDKROOT or defaults to $REPO_ROOT/sdk/cvios
 set(WM_SDKROOT "$ENV{WM_SDKROOT}")
 if(NOT WM_SDKROOT)
-    set(WM_SDKROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../sdk/cvios")
+    set(WM_SDKROOT "$ENV{REPO_ROOT}/sdk/cvios")
 endif()
 message(STATUS "WM_SDKROOT = ${WM_SDKROOT}")
 
@@ -42,8 +34,7 @@ set(ENV{CVIOS_LIBRARY_DIRECTORY} "${WM_SDKROOT}/lib")
 # ---- Common include paths ----
 # Includes needed by all app targets that use WmWindow / StandardProcessFramework
 set(APP_CLIENT_INCLUDES
-    ${WM_CORE_ROOT}/include               # wm/WmWindow.h, wm/surface_ids.h, etc.
-    ${WM_SDKROOT}/include                 # cvi/log/log_service.h
+    ${WM_SDKROOT}/include                 # wm/, windows/, cvi/, spdlog/, etc.
     ${WM_SDKROOT}/include/cvi             # cvi-lib-servicefw/StandardProcessFramework.h
     ${WAYLAND_CLIENT_INCLUDE_DIRS}
     ${WAYLAND_EGL_INCLUDE_DIRS}
@@ -56,8 +47,7 @@ set(APP_COMMON_DEFS _GNU_SOURCE)
 
 # ---- Link directories ----
 link_directories(
-    ${WM_CORE_ROOT}/lib                   # libwm_common.so, libwm_window.so
-    ${WM_SDKROOT}/lib                     # libcvi-lib-log.so, libspdlog.so
+    ${WM_SDKROOT}/lib                     # libwm_*, libcvi-lib-log, libspdlog, etc.
     ${WAYLAND_CLIENT_LIBRARY_DIRS}
     ${WAYLAND_EGL_LIBRARY_DIRS}
     ${IVI_APP_LIBRARY_DIRS})
@@ -112,7 +102,7 @@ wm_warn_flags(wm-navibar)
 
 # ---- wm-ctl: command-line IPC tool ----
 add_executable(wm-ctl src/clients/wm_ctl.cpp)
-target_include_directories(wm-ctl PRIVATE ${WM_CORE_ROOT}/include)
+target_include_directories(wm-ctl PRIVATE ${WM_SDKROOT}/include)
 target_link_libraries(wm-ctl PRIVATE wm_common)
 wm_warn_flags(wm-ctl)
 
